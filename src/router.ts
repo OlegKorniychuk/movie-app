@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import moviesRouter from './movies.router';
+import moviesRouter from './features/movies/movies.router';
 
 const indexRouter = Router();
 

@@ -1,5 +1,5 @@
 import express from 'express';
-import indexRouter from './features/routes/index.router';
+import indexRouter from './router';
 
 const app = express();
 
