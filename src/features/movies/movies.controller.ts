@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+import moviesService from './movies.service';
+import { CreateMovieDto, UpdateMovieDto } from '../../core/dtos/movie.dto';
 
 const moviesController = {
   getMany: async (
@@ -6,7 +8,7 @@ const moviesController = {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    const movies = ['movie1', 'movie2'];
+    const movies = await moviesService.findMany();
     res.status(200).json({ data: movies });
   },
 
@@ -15,7 +17,8 @@ const moviesController = {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    const movie = 'movie';
+    const id = req.params.id!;
+    const movie = await moviesService.find(id);
 
     res.status(200).json({ data: movie });
   },
@@ -25,7 +28,8 @@ const moviesController = {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    const movie = 'movie';
+    const payload: CreateMovieDto = req.body;
+    const movie = await moviesService.create(payload);
 
     res.status(200).json({ data: movie });
   },
@@ -35,6 +39,9 @@ const moviesController = {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
+    const id = req.params.id!;
+    await moviesService.delete(id);
+
     res.status(204);
   },
 
@@ -43,7 +50,9 @@ const moviesController = {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    const movie = 'movie';
+    const id = req.params.id!;
+    const payload: UpdateMovieDto = req.body;
+    const movie = await moviesService.update(id, payload);
 
     res.status(200).json({ data: movie });
   },
@@ -53,7 +62,8 @@ const moviesController = {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    const movies = ['movie1', 'movie2'];
+    // const movies = await moviesService.createMany();
+    const movies = ['uploadedMovie'];
 
     res.status(200).json({ data: movies });
   },
