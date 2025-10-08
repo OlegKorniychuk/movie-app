@@ -25,24 +25,24 @@ export class Movie extends Model<MovieAttributes, MovieAttributes> {
     type: DataType.STRING,
     allowNull: false,
   })
-  title!: string;
+  declare title: string;
 
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
     field: 'release_year',
   })
-  releaseYear!: number;
+  declare releaseYear: number;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  format!: string;
+  declare format: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  actors!: string;
+  declare actors: string;
 }
