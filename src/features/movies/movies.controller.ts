@@ -57,9 +57,16 @@ const moviesController = {
   ): Promise<void> => {
     const id = req.params.id!;
     const payload: UpdateMovieDto = req.body;
-    const movie = await moviesService.update(id, payload);
+    const updatedCount = await moviesService.update(id, payload);
 
-    res.status(200).json({ data: movie });
+    if (!updatedCount) {
+      res.status(404).json({ error: 'Movie not found' });
+      return;
+    }
+
+    const updatedMovie = await moviesService.find(id);
+
+    res.status(200).json({ data: updatedMovie });
   },
 
   importFile:

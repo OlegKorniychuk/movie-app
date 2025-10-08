@@ -49,10 +49,7 @@ const moviesService = {
     return plainMovies.map((m) => ({ ...m, actors: m.actors.split(',') }));
   },
 
-  update: async (
-    id: string,
-    payload: UpdateMovieDto
-  ): Promise<MovieResponseDto | null> => {
+  update: async (id: string, payload: UpdateMovieDto): Promise<number> => {
     const { actors, ...rest } = payload;
     const patchedPayload: Omit<UpdateMovieDto, 'actors'> & { actors?: string } =
       { ...rest };
@@ -61,18 +58,11 @@ const moviesService = {
       patchedPayload.actors = actors.join(',');
     }
 
-    const result = await Movie.update(patchedPayload, {
+    const [result] = await Movie.update(patchedPayload, {
       where: { id },
-      returning: true,
     });
 
-    const updatedMovie = result[1][0];
-
-    if (!updatedMovie) return null;
-
-    const plainMovie = updatedMovie.get({ plain: true });
-
-    return { ...plainMovie, actors: plainMovie.actors.split(',') };
+    return result;
   },
 
   delete: async (id: string): Promise<number> => {
