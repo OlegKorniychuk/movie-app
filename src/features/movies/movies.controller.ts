@@ -1,6 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import moviesService from './movies.service';
-import { CreateMovieDto, UpdateMovieDto } from '../../core/dtos/movie.dto';
+import {
+  CreateMovieDto,
+  MovieResponseDto,
+  UpdateMovieDto,
+} from '../../core/dtos/movie.dto';
+import { IMovieFileParser } from './utils/movieFileParser';
 
 const moviesController = {
   getMany: async (
@@ -57,16 +62,28 @@ const moviesController = {
     res.status(200).json({ data: movie });
   },
 
-  importFile: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    // const movies = await moviesService.createMany();
-    const movies = ['uploadedMovie'];
+  importFile:
+    (fileParser: IMovieFileParser) =>
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        if (!req.file) {
+          res.status(400).json({ error: 'File is required' });
+          return;
+        }
 
-    res.status(200).json({ data: movies });
-  },
+        const parseResult = fileParser.parse(req.file);
+        if (parseResult.error) {
+          res.status(400).json({ fileParsingError: parseResult.error });
+          return;
+        }
+
+        const newMovies = await moviesService.createMany(parseResult.data!);
+
+        res.status(200).json({ data: newMovies });
+      } catch (err) {
+        next(err);
+      }
+    },
 };
 
 export default moviesController;

@@ -6,3 +6,5 @@ export type CreateMovieDto = {
 };
 
 export type UpdateMovieDto = Partial<CreateMovieDto>;
+
+export type MovieResponseDto = CreateMovieDto & { id: string };
