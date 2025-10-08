@@ -47,7 +47,7 @@ const moviesController = {
     const id = req.params.id!;
     await moviesService.delete(id);
 
-    res.status(204);
+    res.status(200).json({ status: 1 });
   },
 
   updateOne: async (
