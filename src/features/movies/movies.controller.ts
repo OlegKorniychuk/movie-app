@@ -1,11 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import moviesService from './movies.service';
-import {
-  CreateMovieDto,
-  MovieResponseDto,
-  UpdateMovieDto,
-} from '../../core/dtos/movie.dto';
+import { CreateMovieDto, UpdateMovieDto } from '../../core/dtos/movie.dto';
 import { IMovieFileParser } from './utils/movieFileParser';
+import { MovieSearchParams } from './types/movieSearchParams';
 
 const moviesController = {
   getMany: async (
@@ -13,7 +10,25 @@ const moviesController = {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    const movies = await moviesService.findMany();
+    const searchParams: MovieSearchParams = {};
+
+    if (req.query.sort || req.query.order) {
+      searchParams.sort = req.query.sort as any;
+      searchParams.order = req.query.order as any;
+    }
+
+    if (req.query.limit || req.query.offset) {
+      searchParams.limit = Number(req.query.limit);
+      searchParams.offset = Number(req.query.offset);
+    }
+
+    if (req.query.title || req.query.actor || req.query.search) {
+      searchParams.title = req.query.title as string;
+      searchParams.actor = req.query.actor as string;
+      searchParams.search = req.query.search as string;
+    }
+
+    const movies = await moviesService.findMany(searchParams);
     res.status(200).json({ data: movies });
   },
 

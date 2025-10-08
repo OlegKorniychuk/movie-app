@@ -5,6 +5,8 @@ import {
 } from '../../core/dtos/movie.dto';
 import { Movie, MovieAttributes } from '../../core/models/movie.model';
 import { v4 as uuidv4 } from 'uuid';
+import { MovieSearchParams } from './types/movieSearchParams';
+import { FindOptions, WhereOptions, Op } from 'sequelize';
 
 const moviesService = {
   create: async (payload: CreateMovieDto): Promise<MovieResponseDto> => {
@@ -42,11 +44,49 @@ const moviesService = {
     return { ...plainMovie, actors: plainMovie.actors.split(',') };
   },
 
-  findMany: async (): Promise<MovieResponseDto[]> => {
-    const newMovies = await Movie.findAll();
-    const plainMovies = newMovies.map((m) => m.get({ plain: true }));
+  findMany: async (params: MovieSearchParams): Promise<MovieResponseDto[]> => {
+    const options: FindOptions = {
+      where: {},
+    };
 
-    return plainMovies.map((m) => ({ ...m, actors: m.actors.split(',') }));
+    // pagination
+    options.limit = params.limit || 10;
+    options.offset = params.offset || 0;
+
+    // sorting
+    const sortField = params.sort ?? 'id';
+    const sortOrder = params.order ?? 'ASC';
+    options.order = [
+      [sortField === 'year' ? 'releaseYear' : sortField, sortOrder],
+    ];
+
+    // filtering
+    if (params.title || params.actor || params.search) {
+      const whereClause: WhereOptions = {};
+
+      if (params.title) {
+        whereClause.title = { [Op.like]: `%${params.title}%` };
+      } else if (params.actor) {
+        whereClause.actors = { [Op.like]: `%${params.actor}%` };
+      } else if (params.search) {
+        whereClause[Op.or as any] = [
+          { title: { [Op.like]: `%${params.search}%` } },
+          { actors: { [Op.like]: `%${params.search}%` } },
+        ];
+      }
+
+      options.where = whereClause;
+    }
+
+    const movies = await Movie.findAll(options);
+
+    return movies.map((movie) => {
+      const plainMovie = movie.get({ plain: true });
+      return {
+        ...plainMovie,
+        actors: plainMovie.actors.split(',').map((a) => a.trim()),
+      };
+    });
   },
 
   update: async (id: string, payload: UpdateMovieDto): Promise<number> => {
