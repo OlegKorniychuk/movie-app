@@ -1,4 +1,4 @@
-import { Model } from 'sequelize-typescript';
+import { Model, Unique } from 'sequelize-typescript';
 import { Column, DataType, PrimaryKey, Table } from 'sequelize-typescript';
 
 @Table({
@@ -13,6 +13,7 @@ export class User extends Model {
   })
   declare id: string;
 
+  @Unique
   @Column({
     type: DataType.STRING,
     allowNull: false,

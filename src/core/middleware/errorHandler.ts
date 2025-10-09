@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../errors/appError';
 import z, { ZodError } from 'zod';
+import { JsonWebTokenError } from 'jsonwebtoken';
 
 export const errorHandler = (
   err: Error,
@@ -17,6 +18,13 @@ export const errorHandler = (
     res.status(400).json({
       error: 'Validation error',
       details: z.prettifyError(err).replace(/\n/g, '').split('✖ ').slice(1),
+    });
+    return;
+  }
+
+  if (err instanceof JsonWebTokenError) {
+    res.status(401).json({
+      error: 'Invalid token',
     });
     return;
   }

@@ -4,6 +4,7 @@ import multer from 'multer';
 import { MovieKeyMap, TxtMovieParser } from './utils/movieFileParser';
 import { validateBody } from '../../core/middleware/validateBody';
 import { validateCreateMovie, validateUpdateMovie } from './movie.validate';
+import { protect } from '../../core/middleware/protect';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -16,6 +17,8 @@ const movieKeyMap: MovieKeyMap = {
   Format: 'format',
   Stars: 'actors',
 };
+
+moviesRouter.all('*any', protect);
 
 moviesRouter
   .route('/import')
