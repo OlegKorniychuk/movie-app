@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import moviesController from './movies.controller';
+import { moviesController } from './movies.controller';
 import multer from 'multer';
 import { MovieKeyMap, TxtMovieParser } from './utils/movieFileParser';
 
