@@ -1,15 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import moviesService from './movies.service';
-import { CreateMovieDto, UpdateMovieDto } from '../../core/dtos/movie.dto';
+import { CreateMovieDto, UpdateMovieDto } from './dtos/movie.dto';
 import { IMovieFileParser } from './utils/movieFileParser';
 import { MovieSearchParams } from './types/movieSearchParams';
+import { catchError } from '../../core/utils/catchError';
+import { AppErrors } from '../../core/errors/errors';
 
-const moviesController = {
-  getMany: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+const getMany = catchError(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const searchParams: MovieSearchParams = {};
 
     if (req.query.sort || req.query.order) {
@@ -30,73 +28,73 @@ const moviesController = {
 
     const movies = await moviesService.findMany(searchParams);
     res.status(200).json({ data: movies });
-  },
+  }
+);
 
-  getOne: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+const getOne = catchError(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const id = req.params.id!;
     const movie = await moviesService.find(id);
 
-    res.status(200).json({ data: movie });
-  },
+    if (!movie) {
+      return next(new AppErrors.NotFound());
+    }
 
-  createOne: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+    res.status(200).json({ data: movie });
+  }
+);
+
+const createOne = catchError(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const payload: CreateMovieDto = req.body;
     const movie = await moviesService.create(payload);
 
     res.status(200).json({ data: movie });
-  },
+  }
+);
 
-  deleteOne: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+const deleteOne = catchError(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const id = req.params.id!;
-    await moviesService.delete(id);
+    const deletedCount = await moviesService.delete(id);
+
+    if (deletedCount === 0) {
+      return next(new AppErrors.NotFound());
+    }
 
     res.status(200).json({ status: 1 });
-  },
+  }
+);
 
-  updateOne: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+const updateOne = catchError(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const id = req.params.id!;
     const payload: UpdateMovieDto = req.body;
     const updatedCount = await moviesService.update(id, payload);
 
     if (!updatedCount) {
-      res.status(404).json({ error: 'Movie not found' });
-      return;
+      return next(new AppErrors.NotFound());
     }
 
     const updatedMovie = await moviesService.find(id);
 
     res.status(200).json({ data: updatedMovie });
-  },
+  }
+);
 
-  importFile:
-    (fileParser: IMovieFileParser) =>
+const importFile = (fileParser: IMovieFileParser) =>
+  catchError(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
         if (!req.file) {
-          res.status(400).json({ error: 'File is required' });
-          return;
+          return next(new AppErrors.BadRequest('File is required'));
         }
 
         const parseResult = fileParser.parse(req.file);
         if (parseResult.error) {
-          res.status(400).json({ fileParsingError: parseResult.error });
-          return;
+          return next(
+            new AppErrors.BadRequest(`File parsing error: ${parseResult.error}`)
+          );
         }
 
         const newMovies = await moviesService.createMany(parseResult.data!);
@@ -105,7 +103,14 @@ const moviesController = {
       } catch (err) {
         next(err);
       }
-    },
-};
+    }
+  );
 
-export default moviesController;
+export const moviesController = {
+  getMany,
+  getOne,
+  createOne,
+  updateOne,
+  deleteOne,
+  importFile,
+} as const;
