@@ -61,7 +61,7 @@ The app will start on the port defined in your `.env` file (default: **8050**).
 You can run the app as a Docker container without installing dependencies locally:
 
 ```bash
-docker run --name movies -p 8000:8050 -e APP_PORT=8050 -e ACCESS_TOKEN_SECRET=secret kornoleh/movies
+docker run --name movies -p 8000:8050 -e APP_PORT=8050 -e ACCESS_TOKEN_SECRET=secret_string kornoleh/movies
 ```
 
 - The app will be accessible at **http://localhost:8000**
