@@ -1,4 +1,4 @@
-import { CreateMovieDto } from '../../../core/dtos/movie.dto';
+import { CreateMovieDto } from '../dtos/movie.dto';
 import { MovieAttributes } from '../../../core/models/movie.model';
 
 export type MovieKeyMap = Record<string, keyof Omit<MovieAttributes, 'id'>>;

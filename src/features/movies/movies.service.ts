@@ -2,7 +2,7 @@ import {
   CreateMovieDto,
   MovieResponseDto,
   UpdateMovieDto,
-} from '../../core/dtos/movie.dto';
+} from './dtos/movie.dto';
 import { Movie, MovieAttributes } from '../../core/models/movie.model';
 import { v4 as uuidv4 } from 'uuid';
 import { MovieSearchParams } from './types/movieSearchParams';

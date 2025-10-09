@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import moviesService from './movies.service';
-import { CreateMovieDto, UpdateMovieDto } from '../../core/dtos/movie.dto';
+import { CreateMovieDto, UpdateMovieDto } from './dtos/movie.dto';
 import { IMovieFileParser } from './utils/movieFileParser';
 import { MovieSearchParams } from './types/movieSearchParams';
 import { catchError } from '../../core/utils/catchError';
