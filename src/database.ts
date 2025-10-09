@@ -3,7 +3,7 @@ import { Movie } from './core/models/movie.model';
 import { User } from './core/models/user.model';
 import SQLite from 'sqlite3';
 
-const dbFileName = process.env.SQLITE_DB!;
+const dbFileName = 'db.sqlite';
 
 export const sequelize = new Sequelize({
   dialect: 'sqlite',

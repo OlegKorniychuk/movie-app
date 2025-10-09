@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../errors/appError';
 import z, { ZodError } from 'zod';
 import { JsonWebTokenError } from 'jsonwebtoken';
+import { UniqueConstraintError } from 'sequelize';
 
 export const errorHandler = (
   err: Error,
@@ -25,6 +26,14 @@ export const errorHandler = (
   if (err instanceof JsonWebTokenError) {
     res.status(401).json({
       error: 'Invalid token',
+    });
+    return;
+  }
+
+  if (err instanceof UniqueConstraintError) {
+    res.status(400).json({
+      error: 'Unique contraint error',
+      details: err.errors.map((e) => e.message),
     });
     return;
   }
