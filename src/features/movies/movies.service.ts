@@ -7,17 +7,18 @@ import { Movie, MovieAttributes } from '../../core/models/movie.model';
 import { v4 as uuidv4 } from 'uuid';
 import { MovieSearchParams } from './types/movieSearchParams';
 import { FindOptions, WhereOptions, Op } from 'sequelize';
+import sequelize from 'sequelize';
 
 const moviesService = {
   create: async (payload: CreateMovieDto): Promise<MovieResponseDto> => {
     const newMovie = await Movie.create({
       id: uuidv4(),
       ...payload,
-      actors: payload.actors.join(','),
+      actors: payload.actors.join(';'),
     });
     const plainMovie = newMovie.get({ plain: true });
 
-    return { ...plainMovie, actors: plainMovie.actors.split(',') };
+    return { ...plainMovie, actors: plainMovie.actors.split(';') };
   },
 
   createMany: async (
@@ -26,12 +27,12 @@ const moviesService = {
     const createData: MovieAttributes[] = payload.map((movie) => ({
       id: uuidv4(),
       ...movie,
-      actors: movie.actors.join(','),
+      actors: movie.actors.join(';'),
     }));
     const newMovies = await Movie.bulkCreate(createData);
     const plainMovies = newMovies.map((m) => m.get({ plain: true }));
 
-    return plainMovies.map((m) => ({ ...m, actors: m.actors.split(',') }));
+    return plainMovies.map((m) => ({ ...m, actors: m.actors.split(';') }));
   },
 
   find: async (id: string): Promise<MovieResponseDto | null> => {
@@ -41,7 +42,7 @@ const moviesService = {
 
     const plainMovie = movie.get({ plain: true });
 
-    return { ...plainMovie, actors: plainMovie.actors.split(',') };
+    return { ...plainMovie, actors: plainMovie.actors.split(';') };
   },
 
   findMany: async (params: MovieSearchParams): Promise<MovieResponseDto[]> => {
@@ -56,8 +57,9 @@ const moviesService = {
     // sorting
     const sortField = params.sort ?? 'id';
     const sortOrder = params.order ?? 'ASC';
+    const mappedSortField = sortField === 'year' ? 'releaseYear' : sortField;
     options.order = [
-      [sortField === 'year' ? 'releaseYear' : sortField, sortOrder],
+      [sequelize.fn('LOWER', sequelize.col(mappedSortField)), sortOrder],
     ];
 
     // filtering
@@ -80,13 +82,21 @@ const moviesService = {
 
     const movies = await Movie.findAll(options);
 
-    return movies.map((movie) => {
+    let mappedMovies: MovieResponseDto[] = movies.map((movie) => {
       const plainMovie = movie.get({ plain: true });
       return {
         ...plainMovie,
-        actors: plainMovie.actors.split(',').map((a) => a.trim()),
+        actors: plainMovie.actors.split(';').map((a) => a.trim()),
       };
     });
+
+    if (params.sort === 'title') {
+      mappedMovies = mappedMovies.sort((a, b) =>
+        a.title.localeCompare(b.title, 'en', { sensitivity: 'base' })
+      );
+    }
+
+    return mappedMovies;
   },
 
   update: async (id: string, payload: UpdateMovieDto): Promise<number> => {
@@ -95,7 +105,7 @@ const moviesService = {
       { ...rest };
 
     if (actors) {
-      patchedPayload.actors = actors.join(',');
+      patchedPayload.actors = actors.join(';');
     }
 
     const [result] = await Movie.update(patchedPayload, {

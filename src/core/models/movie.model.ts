@@ -1,4 +1,4 @@
-import { Model } from 'sequelize-typescript';
+import { Model, Unique } from 'sequelize-typescript';
 import { Column, DataType, PrimaryKey, Table } from 'sequelize-typescript';
 
 export type MovieAttributes = {
@@ -21,12 +21,14 @@ export class Movie extends Model<MovieAttributes, MovieAttributes> {
   })
   declare id: string;
 
+  @Unique('movie-unique-constraint')
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
   declare title: string;
 
+  @Unique('movie-unique-constraint')
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
@@ -40,6 +42,7 @@ export class Movie extends Model<MovieAttributes, MovieAttributes> {
   })
   declare format: string;
 
+  @Unique('movie-unique-constraint')
   @Column({
     type: DataType.STRING,
     allowNull: false,
