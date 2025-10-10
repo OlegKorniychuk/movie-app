@@ -5,6 +5,7 @@ import { IMovieFileParser } from './utils/movieFileParser';
 import { MovieSearchParams } from './types/movieSearchParams';
 import { catchError } from '../../core/utils/catchError';
 import { AppErrors } from '../../core/errors/errors';
+import { validateBulkCreateMovie } from './movie.validate';
 
 const getMany = catchError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -91,13 +92,18 @@ const importFile = (fileParser: IMovieFileParser) =>
         }
 
         const parseResult = fileParser.parse(req.file);
-        if (parseResult.error) {
+
+        if (parseResult.errors.length > 0) {
           return next(
-            new AppErrors.BadRequest(`File parsing error: ${parseResult.error}`)
+            new AppErrors.BadRequest(
+              `File parsing error: ${parseResult.errors.join('; ')}`
+            )
           );
         }
 
-        const newMovies = await moviesService.createMany(parseResult.data!);
+        const validatedMovieData: CreateMovieDto[] =
+          validateBulkCreateMovie.parse(parseResult.data);
+        const newMovies = await moviesService.createMany(validatedMovieData);
 
         res.status(200).json({ data: newMovies });
       } catch (err) {

@@ -1,11 +1,10 @@
-import { CreateMovieDto } from '../dtos/movie.dto';
 import { MovieAttributes } from '../../../core/models/movie.model';
 
 export type MovieKeyMap = Record<string, keyof Omit<MovieAttributes, 'id'>>;
 
 export type ParseMovieFileResult = {
-  error: string | null;
-  data: CreateMovieDto[] | null;
+  errors: string[];
+  data: unknown[];
 };
 
 export interface IMovieFileParser {
@@ -16,39 +15,38 @@ export class TxtMovieParser implements IMovieFileParser {
   constructor(private movieKeyMap: MovieKeyMap) {}
 
   public parse(file: Express.Multer.File): ParseMovieFileResult {
-    const movies: CreateMovieDto[] = [];
+    const result: ParseMovieFileResult = { errors: [], data: [] };
     const data = file.buffer.toString('utf-8').trim();
-    const movieBlocks = data.split(/\r?\n\r?\n\r?\n/);
-    const result: ParseMovieFileResult = { error: null, data: null };
+
+    const movieBlocks = data.split(/\r?\n(?:\s*\r?\n)+/);
 
     for (const [i, block] of movieBlocks.entries()) {
-      const movie: Partial<CreateMovieDto> = {};
+      const movie: Record<string, unknown> = {};
       const lines = block.split(/\r?\n/);
 
       for (const line of lines) {
         const [rawKey, rawValue] = line.split(': ').map((v) => v?.trim() ?? '');
 
-        const mappedKey = this.movieKeyMap[rawKey!];
-        if (!mappedKey) {
-          result.error = `Unexpected key: ${rawKey}`;
+        if (!rawKey || !rawValue) {
+          result.errors.push(`Movie ${i + 1}: malformed line "${line}"`);
+          continue;
+        }
 
-          return result;
+        const mappedKey = this.movieKeyMap[rawKey];
+        if (!mappedKey) {
+          result.errors.push(`Movie ${i + 1}: unexpected key "${rawKey}"`);
+          continue;
         }
 
         if (mappedKey === 'actors') {
-          movie[mappedKey] = rawValue!.split(', ').map((a) => a.trim());
+          movie[mappedKey] = rawValue.split(',').map((a) => a.trim());
         } else {
-          movie[mappedKey] = rawValue as unknown as never;
+          movie[mappedKey] = rawValue;
         }
       }
 
-      if (movie.title && movie.format && movie.releaseYear && movie.actors) {
-        movies.push(movie as CreateMovieDto);
-      } else {
-        result.error = `Movie ${i} is missing some attributes`;
-      }
+      result.data.push(movie);
     }
-    result.data = movies;
 
     return result;
   }
